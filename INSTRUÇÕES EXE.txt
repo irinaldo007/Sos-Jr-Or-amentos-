@@ -1,0 +1,57 @@
+# ============================================
+# COMO TRANSFORMAR EM EXECUTÁVEL (.exe)
+# ============================================
+
+## PREREQUISITOS
+- Node.js instalado (https://nodejs.org)
+- npm (vem junto com o Node.js)
+
+## PASSO 1: PREPARAR A LOGO
+1. Salve a imagem da logo como "logo.png" na pasta do projeto
+2. Opcional: Para criar o ícone do .exe, execute "converter-logo.bat"
+   (requer ImageMagick instalado - https://imagemagick.org)
+
+## PASSO 2: INSTALAR DEPENDÊNCIAS
+Abra o terminal na pasta do projeto e execute:
+
+  npm install
+
+Isso vai instalar o Electron e o Electron Builder.
+
+## PASSO 3: TESTAR LOCALMENTE
+
+  npm start
+
+O aplicativo vai abrir no Electron como uma janela desktop.
+
+## PASSO 4: GERAR EXECUTÁVEL (.exe)
+
+  npm run build-win
+
+O arquivo .exe será gerado na pasta `dist/` após a compilação.
+
+## PASSO 5: DISTRIBUIÇÃO
+O instalador NSIS (.exe) estará em:
+  dist/Sos Jr Orçamentos Setup 1.0.0.exe
+
+Esse arquivo pode ser copiado e instalado em qualquer PC Windows.
+
+## ESTRUTURA DO PROJETO
+```
+Sos presificat/
+├── orcamento.html          ← Página principal (recomendado)
+├── orcamento-sos-jr.html   ← Versão alternativa
+├── logo.png                ← Logo da empresa (salve aqui)
+├── icon.ico                ← Ícone para o .exe (opcional)
+├── electron-main.js        ← Processo principal Electron
+├── package.json            ← Configurações do projeto
+├── converter-logo.bat      ← Conversor de logo para .ico
+└── dist/                   ← Gerado após build
+    └── *.exe
+```
+
+## DICAS
+- Para alterar versão, edite o campo "version" no package.json
+- A logo aparece no formulário lateral e no cabeçalho do orçamento
+- O botão "Salvar PDF / Imprimir" usa window.print() do navegador
+- Para imprimir como PDF, selecione "Salvar como PDF" na janela de impressão

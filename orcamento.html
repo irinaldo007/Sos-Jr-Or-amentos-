@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sos Jr Soluções - Gerador de Orçamentos</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --accent: #e67e22;
+            --green: #27ae60;
+            --red: #e74c3c;
+            --yellow: #f39c12;
+            --blue: #3498db;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 400px;
+            min-width: 400px;
+            background: linear-gradient(180deg, #1a365d 0%, #2c3e50 100%);
+            color: var(--white);
+            padding: 24px 20px;
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar-logo {
+            display: block;
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            border: 3px solid var(--accent);
+            padding: 3px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar h1 { font-size: 1.4rem; text-align: center; color: var(--accent); margin-bottom: 2px; }
+        .sidebar .subtitle { text-align: center; font-size: 0.8rem; color: #a0aec0; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid rgba(255,255,255,0.1); }
+
+        .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin: 18px 0 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(230,126,34,0.3); }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 5px; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            color: var(--white);
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.12); }
+
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group select option { background: #2c3e50; color: white; }
+
+        .service-row { display: grid; grid-template-columns: 24px 1fr 90px 65px 32px; gap: 6px; margin-bottom: 8px; align-items: center; background: rgba(255,255,255,0.05); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); cursor: grab; transition: all 0.2s; }
+        .service-row:active { cursor: grabbing; }
+        .service-row:hover { background: rgba(255,255,255,0.1); }
+        .service-row.dragging { opacity: 0.5; background: rgba(230,126,34,0.2); border-color: var(--accent); }
+        .service-row.drag-over { border-color: var(--accent); background: rgba(230,126,34,0.15); }
+        .service-row input { padding: 8px 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; background: rgba(255,255,255,0.08); color: var(--white); font-size: 0.82rem; }
+        .service-row input:focus { outline: none; border-color: var(--accent); }
+        .drag-handle { color: rgba(255,255,255,0.4); font-size: 1.1rem; cursor: grab; user-select: none; text-align: center; }
+        .drag-handle:hover { color: var(--accent); }
+
+        .btn-remove { width: 32px; height: 32px; border: none; border-radius: 50%; background: #e74c3c; color: white; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-remove:hover { background: #c0392b; }
+
+        .btn-add { width: 100%; padding: 10px; border: 2px dashed rgba(255,255,255,0.25); border-radius: 6px; background: transparent; color: var(--accent); font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: all 0.2s; }
+        .btn-add:hover { border-color: var(--accent); background: rgba(230,126,34,0.1); }
+        .btn-add-preset { width: 100%; padding: 10px; border: 2px solid var(--green); border-radius: 6px; background: rgba(39,174,96,0.1); color: var(--green); font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 6px; transition: all 0.2s; }
+        .btn-add-preset:hover { background: var(--green); color: white; }
+
+        /* MODAL SERVIÇOS PRÉ-CONFIGURADOS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--white); border-radius: 12px; width: 500px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { padding: 16px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 1rem; }
+        .modal-close { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
+        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+
+        .preset-list { display: flex; flex-direction: column; gap: 8px; }
+        .preset-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f7fafc; border-radius: 6px; border: 1px solid var(--border); transition: all 0.2s; }
+        .preset-item:hover { border-color: var(--accent); background: #fff; }
+        .preset-item-info { flex: 1; }
+        .preset-item-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .preset-item-price { font-size: 0.82rem; color: var(--green); font-family: 'Courier New', monospace; font-weight: 600; }
+        .preset-item-actions { display: flex; gap: 6px; }
+        .btn-use-preset { padding: 6px 12px; border: none; border-radius: 5px; background: var(--green); color: white; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+        .btn-use-preset:hover { background: #219a52; }
+        .btn-del-preset { padding: 6px 10px; border: none; border-radius: 5px; background: var(--red); color: white; font-size: 0.78rem; cursor: pointer; }
+        .btn-del-preset:hover { background: #c0392b; }
+
+        .add-preset-form { display: grid; grid-template-columns: 1fr 100px; gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .add-preset-form input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.85rem; background: #f7fafc; }
+        .add-preset-form input:focus { outline: none; border-color: var(--accent); }
+        .btn-save-preset { padding: 8px 12px; border: none; border-radius: 5px; background: var(--accent); color: white; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+        .btn-save-preset:hover { background: #d35400; }
+
+        .btn-actions { display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; }
+
+        .btn-save { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--green); color: white; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+        .btn-save:hover { background: #219a52; }
+
+        .btn-print { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--blue); color: white; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+        .btn-print:hover { background: #2980b9; }
+
+        .btn-new { flex: 1; padding: 12px; border: 2px solid var(--accent); border-radius: 8px; background: transparent; color: var(--accent); font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+        .btn-new:hover { background: rgba(230,126,34,0.15); }
+
+        .btn-clear { padding: 12px 16px; border: 1px solid #e74c3c; border-radius: 8px; background: rgba(231,76,60,0.2); color: #e74c3c; font-size: 0.85rem; cursor: pointer; }
+        .btn-clear:hover { background: #e74c3c; color: white; }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: var(--white);
+            border-bottom: 2px solid var(--border);
+            padding: 0 20px;
+        }
+
+        .tab {
+            padding: 14px 24px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { color: var(--primary); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--accent); }
+
+        /* TAB CONTENT */
+        .tab-content { display: none; flex: 1; }
+        .tab-content.active { display: flex; }
+
+        /* PREVIEW */
+        .preview-area {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: var(--white);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+            padding: 20mm 18mm;
+            position: relative;
+            overflow: visible;
+        }
+
+        .page-break {
+            border: none;
+            border-top: 2px dashed #ccc;
+            margin: 10mm -18mm;
+            position: relative;
+        }
+
+        .page-break::before {
+            content: "Página " counter(page);
+            counter-increment: page;
+            position: absolute;
+            top: -10px;
+            right: 20mm;
+            background: var(--white);
+            padding: 0 8px;
+            font-size: 0.7rem;
+            color: #999;
+            font-weight: 600;
+        }
+
+        .page-indicator {
+            text-align: center;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 0.75rem;
+            color: #666;
+            border: 1px dashed #ddd;
+        }
+
+        /* ORÇAMENTO LAYOUT */
+        .orc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 3px solid var(--primary); }
+        .orc-header-left { flex: 1; }
+        .orc-logo-print { width: 85px; height: auto; margin-bottom: 6px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.1)); }
+        .orc-company-name { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 2px; }
+        .orc-company-info { font-size: 0.72rem; color: #555; line-height: 1.5; }
+        .orc-header-right { text-align: right; }
+        .orc-title { font-size: 1.6rem; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+        .orc-doc-info { font-size: 0.78rem; color: #444; line-height: 1.7; }
+        .orc-doc-info strong { color: var(--primary); }
+
+        .orc-client-section { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; padding: 10px 14px; background: #f7fafc; border-radius: 6px; border: 1px solid var(--border); }
+        .orc-client-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 2px; letter-spacing: 0.5px; }
+        .orc-client-value { font-size: 0.85rem; color: #333; padding: 3px 0; border-bottom: 1px solid #cbd5e0; min-height: 20px; }
+
+        .orc-section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 6px; padding-bottom: 4px; border-bottom: 2px solid var(--border); letter-spacing: 1px; }
+        .orc-description-section { margin-bottom: 14px; }
+        .orc-description-content { font-size: 0.8rem; color: #444; line-height: 1.6; white-space: pre-line; padding: 10px; background: #f7fafc; border-radius: 5px; border: 1px solid var(--border); }
+
+        .orc-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 0.8rem; }
+        .orc-table thead th { background: var(--primary); color: white; padding: 7px 8px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        .orc-table thead th:nth-child(2),
+        .orc-table thead th:nth-child(3),
+        .orc-table thead th:nth-child(4) { text-align: right; width: 85px; }
+        .orc-table tbody td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+        .orc-table tbody tr:nth-child(even) { background: #f7fafc; }
+        .orc-table tbody td:nth-child(2),
+        .orc-table tbody td:nth-child(3),
+        .orc-table tbody td:nth-child(4) { text-align: right; font-family: 'Courier New', monospace; font-weight: 600; }
+
+        .orc-totals { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+        .orc-totals-box { width: 250px; background: #f7fafc; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; }
+        .orc-total-row { display: flex; justify-content: space-between; padding: 7px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--border); }
+        .orc-total-row:last-child { border-bottom: none; }
+        .orc-total-row.grand-total { background: var(--primary); color: white; font-weight: 700; font-size: 0.88rem; padding: 9px 12px; }
+        .orc-total-row.discount { color: #e53e3e; }
+        .orc-total-row.final-price { background: var(--green); color: white; font-weight: 700; font-size: 0.92rem; padding: 10px 12px; }
+        .orc-total-label { font-weight: 600; }
+        .orc-total-value { font-family: 'Courier New', monospace; font-weight: 700; }
+
+        .orc-payment-section { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .orc-payment-box { padding: 10px 12px; background: #f7fafc; border-radius: 6px; border: 1px solid var(--border); }
+        .orc-payment-box h4 { font-size: 0.7rem; text-transform: uppercase; color: var(--primary); margin-bottom: 4px; letter-spacing: 0.5px; }
+        .orc-pix-key { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--green); font-weight: 600; word-break: break-all; }
+        .orc-contact-number { font-family: 'Courier New', monospace; font-size: 0.88rem; color: var(--primary); font-weight: 700; }
+
+        .orc-observations { margin-bottom: 14px; padding: 10px 12px; background: #fffbeb; border-radius: 6px; border: 1px solid #f6e05e; }
+        .orc-observations h4 { font-size: 0.7rem; text-transform: uppercase; color: #975a16; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .orc-observations ul { list-style: none; font-size: 0.72rem; color: #744210; }
+        .orc-observations ul li { padding: 2px 0 2px 14px; position: relative; line-height: 1.4; }
+        .orc-observations ul li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+
+        .orc-signatures { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 10px; }
+        .orc-signature { width: 200px; text-align: center; }
+        .orc-signature-line { border-top: 2px solid var(--primary); padding-top: 6px; margin-top: 30px; font-size: 0.75rem; font-weight: 600; color: var(--primary); text-transform: uppercase; }
+
+        .orc-footer { margin-top: 25px; padding-top: 12px; border-top: 2px solid var(--border); text-align: center; font-size: 0.7rem; color: #999; }
+
+        /* ==================== GERENCIADOR ==================== */
+        .manager-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .manager-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .manager-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .manager-stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .stat-card .stat-number { font-size: 1.8rem; font-weight: 800; }
+        .stat-card .stat-label { font-size: 0.75rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-total { background: linear-gradient(135deg, #1a365d, #2c5282); }
+        .stat-approved { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .stat-analysis { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .stat-refused { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            background: var(--white);
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 14px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background: var(--white);
+        }
+
+        .search-input:focus { outline: none; border-color: var(--primary); }
+
+        .budget-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .budget-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--white);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+        }
+
+        .budget-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .budget-card-info { flex: 1; }
+
+        .budget-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .budget-card-meta {
+            font-size: 0.78rem;
+            color: var(--text-light);
+        }
+
+        .budget-card-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--green);
+            font-family: 'Courier New', monospace;
+        }
+
+        .budget-card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-card {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-edit { background: #3498db; color: white; }
+        .btn-edit:hover { background: #2980b9; }
+        .btn-view { background: #27ae60; color: white; }
+        .btn-view:hover { background: #219a52; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-delete:hover { background: #c0392b; }
+
+        /* STATUS BADGES */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-aprovado { background: #d4edda; color: #155724; }
+        .status-analise { background: #fff3cd; color: #856404; }
+        .status-recusado { background: #f8d7da; color: #721c24; }
+        .status-rascunho { background: #e2e3e5; color: #383d41; }
+
+        .status-select {
+            padding: 6px 10px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--white);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* RESPONSIVO */
+        @media (max-width: 1200px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; min-width: unset; height: auto; position: relative; }
+            .preview-area { padding: 20px 10px; }
+            .page { width: 100%; min-height: auto; padding: 15mm 10mm; overflow: visible; }
+            .manager-stats { flex-wrap: wrap; }
+            .stat-card { min-width: 120px; }
+        }
+
+        /* IMPRESSÃO - PADRÃO A4 */
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            @page {
+                size: A4 portrait;
+                margin: 10mm 12mm 10mm 12mm;
+            }
+
+            html, body {
+                width: 210mm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white;
+            }
+
+            body { display: block; }
+
+            .sidebar, .tabs, .manager-area, .main-content > .tab-content:not(#tab-preview) {
+                display: none !important;
+            }
+
+            .main-content {
+                display: block;
+                width: 100%;
+            }
+
+            #tab-preview {
+                display: block !important;
+            }
+
+            .preview-area {
+                padding: 0;
+                display: block;
+                width: 100%;
+            }
+
+            .page {
+                width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+            }
+
+            .page-break {
+                page-break-before: always;
+                border: none;
+                margin: 0;
+            }
+
+            .page-break::before {
+                display: none;
+            }
+
+            .page-indicator {
+                display: none;
+            }
+
+            .orc-header { margin-bottom: 12mm; padding-bottom: 4mm; }
+            .orc-logo-print { width: 80px; }
+            .orc-company-name { font-size: 1.4rem; }
+            .orc-title { font-size: 1.5rem; margin-bottom: 4px; }
+            .orc-client-section { margin-bottom: 6mm; padding: 3mm; }
+            .orc-description-section { margin-bottom: 6mm; }
+            .orc-table { margin-bottom: 5mm; font-size: 0.8rem; }
+            .orc-table thead th { padding: 2mm; font-size: 0.7rem; }
+            .orc-table tbody td { padding: 2mm; }
+            .orc-totals { margin-bottom: 6mm; }
+            .orc-totals-box { width: 65mm; }
+            .orc-total-row { padding: 2mm 3mm; font-size: 0.8rem; }
+            .orc-payment-section { margin-bottom: 6mm; }
+            .orc-observations { margin-bottom: 6mm; padding: 3mm; }
+            .orc-observations ul li { font-size: 0.72rem; }
+            .orc-signatures { margin-top: 15mm; }
+            .orc-signature-line { margin-top: 15mm; }
+            .orc-footer { margin-top: 8mm; padding-top: 3mm; font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- FORMULÁRIO -->
+    <aside class="sidebar">
+            <img src="logo.png" alt="Logo" class="sidebar-logo" style="max-width:120px; max-height:120px;">
+        <h1>Sos Jr Soluções</h1>
+        <p class="subtitle">Gerador de Orçamentos</p>
+
+        <input type="hidden" id="editId" value="">
+
+        <div class="section-label">Dados do Documento</div>
+        <div class="form-group">
+            <label>Nº do Documento</label>
+            <input type="text" id="docNumber" placeholder="Ex: 0001" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Data do Documento</label>
+            <input type="date" id="docDate" oninput="updatePreview()">
+        </div>
+
+        <div class="section-label">Dados do Cliente</div>
+        <div class="form-group">
+            <label>Nome do Cliente</label>
+            <input type="text" id="clientName" placeholder="Nome completo" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Telefone de Contato</label>
+            <input type="text" id="clientPhone" placeholder="(XX) XXXXX-XXXX" oninput="updatePreview()">
+        </div>
+
+        <div class="section-label">Descrição de Atividades</div>
+        <div class="form-group">
+            <label>Título do Serviço</label>
+            <input type="text" id="serviceTitle" placeholder="Ex: Instalação do Padrão de Energia Tipo T6" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Descrição Detalhada</label>
+            <textarea id="serviceDescription" rows="4" oninput="updatePreview()">1. Planejamento e Análise Técnica
+2. Fornecimento de Materiais
+3. Instalação e Montagem
+4. Conexão e Testes
+5. Documentação e Homologação</textarea>
+        </div>
+
+        <div class="section-label">Serviços / Itens</div>
+        <div id="servicesList"></div>
+        <button class="btn-add" onclick="addService()">+ Adicionar Serviço</button>
+        <button class="btn-add-preset" onclick="openPresetsModal()">📋 Serviços Pré-Configurados</button>
+
+        <div class="section-label">Pagamento e Desconto</div>
+        <div class="form-group">
+            <label>Forma de Pagamento</label>
+            <select id="paymentMethod" onchange="updatePreview()">
+                <option value="PIX">PIX</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="Boleto">Boleto Bancário</option>
+                <option value="Transferência">Transferência Bancária</option>
+                <option value="Parcelado">Parcelado</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Chave PIX (para este orçamento)</label>
+            <input type="text" id="pixKey" placeholder="Ex: +5569992819812" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Desconto (R$)</label>
+            <input type="number" id="discount" placeholder="0,00" step="0.01" min="0" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="budgetStatus">
+                <option value="rascunho">Rascunho</option>
+                <option value="analise">Em Análise</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="recusado">Recusado</option>
+            </select>
+        </div>
+
+        <div class="btn-actions">
+            <button class="btn-save" onclick="saveBudget()">💾 Salvar</button>
+            <button class="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn-new" onclick="newBudget()">➕ Novo</button>
+            <button class="btn-clear" onclick="clearForm()">🗑️</button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="main-content">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('preview')">📄 Orçamento</div>
+            <div class="tab" onclick="switchTab('manager')">📋 Gerenciador</div>
+            <div class="tab" onclick="switchTab('company')">⚙️ Empresa</div>
+        </div>
+
+        <!-- TAB: PRÉ-VISUALIZAÇÃO -->
+        <div class="tab-content active" id="tab-preview">
+            <main class="preview-area">
+                <div class="page">
+                    <div class="orc-header">
+                        <div class="orc-header-left">
+                            <img src="logo.png" alt="Logo" class="orc-logo-print" style="max-width:85px; max-height:85px;">
+                            <div class="orc-company-name" id="companyNameDisplay">Sos Jr Soluções</div>
+                            <div class="orc-company-info" id="companyCNPJDisplay">
+                                CNPJ: 21.117.755/0001-40<br>
+                                Cidade: Porto Velho - RO<br>
+                                Estado: Rondônia | CEP: 76525-315
+                            </div>
+                        </div>
+                        <div class="orc-header-right">
+                            <div class="orc-title">Orçamento</div>
+                            <div class="orc-doc-info">
+                                <strong>Nº:</strong> <span id="previewDocNumber">---</span><br>
+                                <strong>Data:</strong> <span id="previewDocDate">--/--/----</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="orc-client-section">
+                        <div>
+                            <div class="orc-client-label">Cliente</div>
+                            <div class="orc-client-value" id="previewClientName">---</div>
+                        </div>
+                        <div>
+                            <div class="orc-client-label">Contato</div>
+                            <div class="orc-client-value" id="previewClientPhone">---</div>
+                        </div>
+                    </div>
+
+                    <div class="orc-description-section">
+                        <div class="orc-section-title">Descrição de Atividades</div>
+                        <div class="orc-description-content" id="previewDescription">Preencha o formulário...</div>
+                    </div>
+
+                    <table class="orc-table">
+                        <thead>
+                            <tr><th>Serviços</th><th>Preço</th><th>Quantidade</th><th>Valor</th></tr>
+                        </thead>
+                        <tbody id="previewTableBody">
+                            <tr><td colspan="4" style="text-align:center;color:#999;">Nenhum serviço adicionado</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="orc-totals">
+                        <div class="orc-totals-box">
+                            <div class="orc-total-row">
+                                <span class="orc-total-label">Subtotal</span>
+                                <span class="orc-total-value" id="previewSubtotal">R$ 0,00</span>
+                            </div>
+                            <div class="orc-total-row grand-total">
+                                <span class="orc-total-label">TOTAL SERVIÇOS</span>
+                                <span class="orc-total-value" id="previewTotal">R$ 0,00</span>
+                            </div>
+                            <div class="orc-total-row discount" id="discountRow" style="display:none;">
+                                <span class="orc-total-label">Desconto</span>
+                                <span class="orc-total-value" id="previewDiscount">- R$ 0,00</span>
+                            </div>
+                            <div class="orc-total-row final-price">
+                                <span class="orc-total-label">PREÇO FINAL</span>
+                                <span class="orc-total-value" id="previewFinalPrice">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="orc-payment-section">
+                        <div class="orc-payment-box">
+                            <h4>Chave PIX</h4>
+                            <div class="orc-pix-key" id="companyPIXDisplay">+5569992819812</div>
+                        </div>
+                        <div class="orc-payment-box">
+                            <h4>Contato</h4>
+                            <div class="orc-contact-number" id="companyPhoneDisplay">+55 69 99281-9812</div>
+                        </div>
+                    </div>
+
+                    <div class="orc-observations">
+                        <h4>Observações</h4>
+                        <ul id="companyObsDisplay">
+                            <li>Validade do Orçamento: 7 dias a partir da data de emissão.</li>
+                            <li>Garantia da Mão de Obra: 90 dias para serviços executados.</li>
+                            <li>Formas de Pagamento: PIX, Dinheiro, Cartão, Boleto e Transferência.</li>
+                            <li>Serviços extras não previstos serão orçados separadamente.</li>
+                        </ul>
+                    </div>
+
+                    <div class="orc-signatures">
+                        <div class="orc-signature"><div class="orc-signature-line">Assinatura Sos Jr Soluções</div></div>
+                        <div class="orc-signature"><div class="orc-signature-line">Assinatura do Cliente</div></div>
+                    </div>
+
+                    <div class="orc-footer" id="footerDisplay">
+                        Sos Jr Soluções | CNPJ: 21.117.755/0001-40 | Porto Velho - RO<br>
+                        Contato: +55 69 99281-9812 | Obrigado pela preferência!
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- TAB: GERENCIADOR -->
+        <div class="tab-content" id="tab-manager">
+            <main class="manager-area">
+                <div class="manager-header">
+                    <h2>Gerenciador de Orçamentos</h2>
+                </div>
+
+                <div class="manager-stats">
+                    <div class="stat-card stat-total"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total</div></div>
+                    <div class="stat-card stat-approved"><div class="stat-number" id="statApproved">0</div><div class="stat-label">Aprovados</div></div>
+                    <div class="stat-card stat-analysis"><div class="stat-number" id="statAnalysis">0</div><div class="stat-label">Em Análise</div></div>
+                    <div class="stat-card stat-refused"><div class="stat-number" id="statRefused">0</div><div class="stat-label">Recusados</div></div>
+                </div>
+
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterBudgets('todos')">Todos</button>
+                    <button class="filter-btn" onclick="filterBudgets('rascunho')">Rascunho</button>
+                    <button class="filter-btn" onclick="filterBudgets('analise')">Em Análise</button>
+                    <button class="filter-btn" onclick="filterBudgets('aprovado')">Aprovado</button>
+                    <button class="filter-btn" onclick="filterBudgets('recusado')">Recusado</button>
+                    <input type="text" class="search-input" placeholder="🔍 Buscar por cliente ou nº..." oninput="searchBudgets(this.value)">
+                </div>
+
+                <div class="budget-list" id="budgetList"></div>
+            </main>
+        </div>
+
+        <!-- TAB: DADOS DA EMPRESA -->
+        <div class="tab-content" id="tab-company">
+            <main class="manager-area">
+                <div class="manager-header">
+                    <h2>Dados da Empresa</h2>
+                </div>
+
+                <div style="max-width:600px; background:var(--white); padding:24px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+                    <div class="form-group">
+                        <label style="color:var(--text);">Logo da Empresa</label>
+                        <div style="display:flex; align-items:center; gap:16px; padding:12px; background:#f7fafc; border-radius:8px; border:1px solid var(--border);">
+                            <img id="logoPreview" src="logo.png" alt="Logo" style="width:80px; height:80px; object-fit:contain; border-radius:8px; border:2px solid var(--border); background:white;">
+                            <div style="flex:1;">
+                                <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(this)" style="display:none;">
+                                <button class="btn-save" onclick="document.getElementById('logoUpload').click()" style="width:auto; padding:8px 16px; font-size:0.8rem;">📁 Escolher Logo</button>
+                                <button class="btn-clear" onclick="removeLogo()" style="width:auto; padding:8px 12px; font-size:0.8rem; margin-left:6px;">🗑️ Remover</button>
+                                <p style="margin-top:6px; font-size:0.7rem; color:var(--text-light);">PNG, JPG até 2MB. Aparece no orçamento impresso.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">Nome da Empresa</label>
+                        <input type="text" id="companyName" placeholder="Sos Jr Soluções" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">CNPJ</label>
+                        <input type="text" id="companyCNPJ" placeholder="00.000.000/0000-00" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">Endereço</label>
+                        <input type="text" id="companyAddress" placeholder="Rua, número, bairro" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label style="color:var(--text);">Cidade</label>
+                            <input type="text" id="companyCity" placeholder="Porto Velho" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                        </div>
+                        <div class="form-group">
+                            <label style="color:var(--text);">Estado</label>
+                            <input type="text" id="companyState" placeholder="RO" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">CEP</label>
+                        <input type="text" id="companyCEP" placeholder="00000-000" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">Telefone</label>
+                        <input type="text" id="companyPhone" placeholder="(00) 00000-0000" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">Chave PIX</label>
+                        <input type="text" id="companyPIX" placeholder="Chave PIX" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:var(--text);">Observações Padrão</label>
+                        <textarea id="companyObs" rows="4" style="background:#f7fafc; color:var(--text); border:1px solid var(--border);">Validade do Orçamento: 7 dias a partir da data de emissão.
+Garantia da Mão de Obra: 90 dias para serviços executados.
+Formas de Pagamento: PIX, Dinheiro, Cartão, Boleto e Transferência.
+Serviços extras não previstos serão orçados separadamente.</textarea>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn-save" onclick="saveCompany()" style="flex:1;">💾 Salvar Dados da Empresa</button>
+                        <button class="btn-new" onclick="resetCompany()" style="flex:1;">🔄 Restaurar Padrão</button>
+                    </div>
+                    <p style="margin-top:12px; font-size:0.8rem; color:var(--text-light);">As alterações são salvas no navegador e aplicadas automaticamente ao orçamento.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL SERVIÇOS PRÉ-CONFIGURADOS -->
+    <div class="modal-overlay" id="presetsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Serviços Pré-Configurados</h3>
+                <button class="modal-close" onclick="closePresetsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="add-preset-form">
+                    <input type="text" id="newPresetName" placeholder="Nome do serviço">
+                    <input type="number" id="newPresetPrice" placeholder="R$ 0,00" step="0.01" min="0">
+                    <button class="btn-save-preset" onclick="addPreset()" style="grid-column: 1 / -1; width: 100%;">+ Adicionar Novo Serviço</button>
+                </div>
+                <div class="preset-list" id="presetList"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-new" onclick="closePresetsModal()" style="flex:1;">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var serviceItems = [];
+        var itemCounter = 0;
+        var currentFilter = 'todos';
+        var currentSearch = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('docDate').valueAsDate = new Date();
+            loadCompany();
+            addService();
+            updatePreview();
+            loadBudgetList();
+        });
+
+        // ==================== TABS ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'manager') loadBudgetList();
+        }
+
+        // ==================== DADOS DA EMPRESA ====================
+        var defaultCompany = {
+            name: 'Sos Jr Soluções',
+            cnpj: '21.117.755/0001-40',
+            address: '',
+            city: 'Porto Velho',
+            state: 'Rondônia',
+            cep: '76525-315',
+            phone: '+55 69 99281-9812',
+            pix: '+5569992819812',
+            obs: 'Validade do Orçamento: 7 dias a partir da data de emissão.\nGarantia da Mão de Obra: 90 dias para serviços executados.\nFormas de Pagamento: PIX, Dinheiro, Cartão, Boleto e Transferência.\nServiços extras não previstos serão orçados separadamente.'
+        };
+
+        function loadCompany() {
+            var data = JSON.parse(localStorage.getItem('empresa') || 'null') || defaultCompany;
+            document.getElementById('companyName').value = data.name || '';
+            document.getElementById('companyCNPJ').value = data.cnpj || '';
+            document.getElementById('companyAddress').value = data.address || '';
+            document.getElementById('companyCity').value = data.city || '';
+            document.getElementById('companyState').value = data.state || '';
+            document.getElementById('companyCEP').value = data.cep || '';
+            document.getElementById('companyPhone').value = data.phone || '';
+            document.getElementById('companyPIX').value = data.pix || '';
+            document.getElementById('companyObs').value = data.obs || '';
+            document.getElementById('pixKey').value = data.pix || '';
+            if (data.logo) {
+                document.getElementById('logoPreview').src = data.logo;
+                document.querySelectorAll('.orc-logo-print').forEach(function(el) { el.src = data.logo; });
+                document.querySelectorAll('.sidebar-logo').forEach(function(el) { el.src = data.logo; });
+            }
+            applyCompany(data);
+        }
+
+        function uploadLogo(input) {
+            var file = input.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { alert('Arquivo muito grande. Máximo 2MB.'); return; }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64 = e.target.result;
+                document.getElementById('logoPreview').src = base64;
+                document.querySelectorAll('.orc-logo-print').forEach(function(el) { el.src = base64; });
+                document.querySelectorAll('.sidebar-logo').forEach(function(el) { el.src = base64; });
+                var company = JSON.parse(localStorage.getItem('empresa') || 'null') || defaultCompany;
+                company.logo = base64;
+                localStorage.setItem('empresa', JSON.stringify(company));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeLogo() {
+            if (!confirm('Remover a logo?')) return;
+            document.getElementById('logoPreview').src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f0f2f5%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>Sem Logo</text></svg>';
+            var defaultLogo = 'logo.png';
+            document.querySelectorAll('.orc-logo-print').forEach(function(el) { el.src = defaultLogo; });
+            document.querySelectorAll('.sidebar-logo').forEach(function(el) { el.src = defaultLogo; });
+            var company = JSON.parse(localStorage.getItem('empresa') || 'null') || defaultCompany;
+            delete company.logo;
+            localStorage.setItem('empresa', JSON.stringify(company));
+        }
+
+        function applyCompany(data) {
+            var nameEl = document.getElementById('companyNameDisplay');
+            var cnpjEl = document.getElementById('companyCNPJDisplay');
+            var pixEl = document.getElementById('companyPIXDisplay');
+            var phoneEl = document.getElementById('companyPhoneDisplay');
+            var obsEl = document.getElementById('companyObsDisplay');
+            var footerEl = document.getElementById('footerDisplay');
+
+            var cnpjLine = data.cnpj ? 'CNPJ: ' + data.cnpj : '';
+            var cityLine = 'Cidade: ' + (data.city || '---') + ' - ' + (data.state || '');
+            var cepLine = 'Estado: ' + (data.state || '---') + ' | CEP: ' + (data.cep || '---');
+
+            if (nameEl) nameEl.textContent = data.name || 'Empresa';
+            if (cnpjEl) cnpjEl.innerHTML = (cnpjLine ? cnpjLine + '<br>' : '') + cityLine + '<br>' + cepLine;
+            if (pixEl) pixEl.textContent = data.pix || '---';
+            if (phoneEl) phoneEl.textContent = data.phone || '---';
+            if (footerEl) footerEl.innerHTML = (data.name || 'Empresa') + (data.cnpj ? ' | CNPJ: ' + data.cnpj : '') + (data.city ? ' | ' + data.city + ' - ' + data.state : '') + '<br>Contato: ' + (data.phone || '---') + ' | Obrigado pela preferência!';
+            if (obsEl) {
+                obsEl.innerHTML = '';
+                (data.obs || '').split('\n').forEach(function(line) {
+                    if (line.trim()) {
+                        var li = document.createElement('li');
+                        li.textContent = line;
+                        obsEl.appendChild(li);
+                    }
+                });
+            }
+        }
+
+        function saveCompany() {
+            var data = {
+                name: document.getElementById('companyName').value,
+                cnpj: document.getElementById('companyCNPJ').value,
+                address: document.getElementById('companyAddress').value,
+                city: document.getElementById('companyCity').value,
+                state: document.getElementById('companyState').value,
+                cep: document.getElementById('companyCEP').value,
+                phone: document.getElementById('companyPhone').value,
+                pix: document.getElementById('companyPIX').value,
+                obs: document.getElementById('companyObs').value
+            };
+            localStorage.setItem('empresa', JSON.stringify(data));
+            applyCompany(data);
+            alert('Dados da empresa salvos com sucesso!');
+        }
+
+        function resetCompany() {
+            if (!confirm('Restaurar os dados padrão da empresa?')) return;
+            localStorage.removeItem('empresa');
+            loadCompany();
+            alert('Dados restaurados para o padrão!');
+        }
+
+        // ==================== SERVIÇOS ====================
+        var draggedItem = null;
+
+        function addService(name, price) {
+            itemCounter++;
+            var id = itemCounter;
+            var serviceName = name || '';
+            var servicePrice = price || 0;
+            serviceItems.push({ id: id, name: serviceName, price: servicePrice, qty: 1 });
+            var container = document.getElementById('servicesList');
+            var div = document.createElement('div');
+            div.className = 'service-row';
+            div.id = 'svc-' + id;
+            div.draggable = true;
+            div.setAttribute('data-id', id);
+            div.innerHTML =
+                '<div class="drag-handle" title="Arrastar para reordenar">☰</div>' +
+                '<input type="text" placeholder="Serviço" value="' + serviceName + '" oninput="updSvc(' + id + ',\'name\',this.value)">' +
+                '<input type="number" placeholder="R$ 0,00" step="0.01" min="0" value="' + (servicePrice || '') + '" oninput="updSvc(' + id + ',\'price\',this.value)">' +
+                '<input type="number" placeholder="Qtd" value="1" min="1" oninput="updSvc(' + id + ',\'qty\',this.value)">' +
+                '<button class="btn-remove" onclick="rmSvc(' + id + ')">×</button>';
+            
+            // Drag events
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('dragenter', handleDragEnter);
+            div.addEventListener('dragleave', handleDragLeave);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragend', handleDragEnd);
+            
+            container.appendChild(div);
+            updatePreview();
+        }
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (draggedItem !== this) {
+                var container = document.getElementById('servicesList');
+                var allRows = Array.from(container.querySelectorAll('.service-row'));
+                var draggedIndex = allRows.indexOf(draggedItem);
+                var droppedIndex = allRows.indexOf(this);
+                
+                if (draggedIndex < droppedIndex) {
+                    container.insertBefore(draggedItem, this.nextSibling);
+                } else {
+                    container.insertBefore(draggedItem, this);
+                }
+                
+                // Update serviceItems array order
+                var draggedId = parseInt(draggedItem.getAttribute('data-id'));
+                var droppedId = parseInt(this.getAttribute('data-id'));
+                var draggedIdx = serviceItems.findIndex(function(i) { return i.id === draggedId; });
+                var droppedIdx = serviceItems.findIndex(function(i) { return i.id === droppedId; });
+                
+                var item = serviceItems.splice(draggedIdx, 1)[0];
+                serviceItems.splice(droppedIdx, 0, item);
+                
+                updatePreview();
+            }
+            this.classList.remove('drag-over');
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.service-row').forEach(function(row) {
+                row.classList.remove('drag-over');
+            });
+        }
+
+        function updSvc(id, field, value) {
+            var item = serviceItems.find(function(i) { return i.id === id; });
+            if (!item) return;
+            if (field === 'price') item[field] = parseFloat(value) || 0;
+            else if (field === 'qty') item[field] = parseInt(value) || 1;
+            else item[field] = value;
+            updatePreview();
+        }
+
+        function rmSvc(id) {
+            var el = document.getElementById('svc-' + id);
+            if (el) el.remove();
+            serviceItems = serviceItems.filter(function(i) { return i.id !== id; });
+            updatePreview();
+        }
+
+        // ==================== SERVIÇOS PRÉ-CONFIGURADOS ====================
+        var defaultPresets = [
+            { id: 1, name: 'Instalação de Tomada', price: 45.00 },
+            { id: 2, name: 'Instalação de Interruptor', price: 40.00 },
+            { id: 3, name: 'Instalação de Luminária', price: 60.00 },
+            { id: 4, name: 'Instalação de Ventilador de Teto', price: 80.00 },
+            { id: 5, name: 'Instalação de Chuveiro Elétrico', price: 70.00 },
+            { id: 6, name: 'Instalação de Ar-Condicionado', price: 250.00 },
+            { id: 7, name: 'Manutenção Elétrica', price: 120.00 },
+            { id: 8, name: 'Instalação de Quadro de Distribuição', price: 180.00 },
+            { id: 9, name: 'Passagem de Fiação', price: 90.00 },
+            { id: 10, name: 'Instalação de Spot', price: 55.00 }
+        ];
+
+        function getPresets() {
+            return JSON.parse(localStorage.getItem('presetServices') || 'null') || defaultPresets;
+        }
+
+        function savePresets(presets) {
+            localStorage.setItem('presetServices', JSON.stringify(presets));
+        }
+
+        function openPresetsModal() {
+            document.getElementById('presetsModal').classList.add('active');
+            loadPresetList();
+        }
+
+        function closePresetsModal() {
+            document.getElementById('presetsModal').classList.remove('active');
+        }
+
+        function loadPresetList() {
+            var presets = getPresets();
+            var list = document.getElementById('presetList');
+            list.innerHTML = '';
+            
+            if (presets.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum serviço pré-configurado</p>';
+                return;
+            }
+            
+            presets.forEach(function(preset) {
+                var div = document.createElement('div');
+                div.className = 'preset-item';
+                div.innerHTML =
+                    '<div class="preset-item-info">' +
+                        '<div class="preset-item-name">' + preset.name + '</div>' +
+                        '<div class="preset-item-price">R$ ' + preset.price.toFixed(2).replace('.', ',') + '</div>' +
+                    '</div>' +
+                    '<div class="preset-item-actions">' +
+                        '<button class="btn-use-preset" onclick="usePreset(' + preset.id + ')">+ Usar</button>' +
+                        '<button class="btn-del-preset" onclick="deletePreset(' + preset.id + ')">×</button>' +
+                    '</div>';
+                list.appendChild(div);
+            });
+        }
+
+        function addPreset() {
+            var name = document.getElementById('newPresetName').value.trim();
+            var price = parseFloat(document.getElementById('newPresetPrice').value) || 0;
+            
+            if (!name) {
+                alert('Digite o nome do serviço.');
+                return;
+            }
+            
+            var presets = getPresets();
+            var newId = presets.length > 0 ? Math.max.apply(null, presets.map(function(p) { return p.id; })) + 1 : 1;
+            presets.push({ id: newId, name: name, price: price });
+            savePresets(presets);
+            
+            document.getElementById('newPresetName').value = '';
+            document.getElementById('newPresetPrice').value = '';
+            
+            loadPresetList();
+        }
+
+        function deletePreset(id) {
+            if (!confirm('Excluir este serviço pré-configurado?')) return;
+            var presets = getPresets();
+            presets = presets.filter(function(p) { return p.id !== id; });
+            savePresets(presets);
+            loadPresetList();
+        }
+
+        function usePreset(id) {
+            var presets = getPresets();
+            var preset = presets.find(function(p) { return p.id === id; });
+            if (preset) {
+                addService(preset.name, preset.price);
+                closePresetsModal();
+            }
+        }
+
+        // ==================== PRÉ-VISUALIZAÇÃO ====================
+        function updatePreview() {
+            var docNumber = document.getElementById('docNumber').value || '---';
+            var docDate = document.getElementById('docDate').value;
+            var clientName = document.getElementById('clientName').value || '---';
+            var clientPhone = document.getElementById('clientPhone').value || '---';
+            var serviceTitle = document.getElementById('serviceTitle').value || '';
+            var serviceDescription = document.getElementById('serviceDescription').value;
+            var discountValue = parseFloat(document.getElementById('discount').value) || 0;
+            var pixKey = document.getElementById('pixKey').value;
+
+            var formattedDate = '--/--/----';
+            if (docDate) { var p = docDate.split('-'); formattedDate = p[2] + '/' + p[1] + '/' + p[0]; }
+
+            document.getElementById('previewDocNumber').textContent = docNumber;
+            document.getElementById('previewDocDate').textContent = formattedDate;
+            document.getElementById('previewClientName').textContent = clientName;
+            document.getElementById('previewClientPhone').textContent = clientPhone;
+
+            if (pixKey) {
+                document.getElementById('companyPIXDisplay').textContent = pixKey;
+            }
+
+            var fullDesc = serviceTitle + (serviceDescription ? '\n\n' + serviceDescription : '');
+            document.getElementById('previewDescription').textContent = fullDesc || 'Preencha o formulário...';
+
+            var tbody = document.getElementById('previewTableBody');
+            tbody.innerHTML = '';
+            var subtotal = 0;
+            var hasItems = false;
+
+            serviceItems.forEach(function(item) {
+                var name = item.name || '';
+                var price = item.price || 0;
+                var qty = item.qty || 1;
+                var total = price * qty;
+                if (name || price > 0) {
+                    hasItems = true;
+                    subtotal += total;
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + (name || 'Serviço') + '</td><td>R$ ' + fmtCur(price) + '</td><td>' + qty + '</td><td>R$ ' + fmtCur(total) + '</td>';
+                    tbody.appendChild(tr);
+                }
+            });
+
+            if (!hasItems) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">Nenhum serviço adicionado</td></tr>';
+
+            document.getElementById('previewSubtotal').textContent = 'R$ ' + fmtCur(subtotal);
+            document.getElementById('previewTotal').textContent = 'R$ ' + fmtCur(subtotal);
+
+            var discountRow = document.getElementById('discountRow');
+            if (discountValue > 0) { discountRow.style.display = 'flex'; document.getElementById('previewDiscount').textContent = '- R$ ' + fmtCur(discountValue); }
+            else { discountRow.style.display = 'none'; }
+
+            var finalPrice = Math.max(0, subtotal - discountValue);
+            document.getElementById('previewFinalPrice').textContent = 'R$ ' + fmtCur(finalPrice);
+            
+            updatePageBreaks();
+        }
+
+        function fmtCur(v) { return v.toFixed(2).replace('.', ','); }
+
+        function updatePageBreaks() {
+            var page = document.querySelector('.page');
+            var existingBreaks = page.querySelectorAll('.page-break');
+            existingBreaks.forEach(function(br) { br.remove(); });
+            
+            var existingIndicators = page.querySelectorAll('.page-indicator');
+            existingIndicators.forEach(function(ind) { ind.remove(); });
+            
+            var a4HeightMm = 297;
+            var paddingVerticalMm = 40;
+            var contentHeightMm = a4HeightMm - paddingVerticalMm;
+            
+            var pageHeightPx = page.offsetHeight;
+            var mmToPx = pageHeightPx / a4HeightMm;
+            var breakIntervalPx = contentHeightMm * mmToPx;
+            
+            var sections = page.children;
+            var currentHeight = 0;
+            var pageCount = 1;
+            
+            for (var i = 0; i < sections.length; i++) {
+                var section = sections[i];
+                if (section.classList.contains('page-break') || section.classList.contains('page-indicator')) {
+                    continue;
+                }
+                
+                currentHeight += section.offsetHeight;
+                
+                if (currentHeight > breakIntervalPx && i > 0) {
+                    var breakDiv = document.createElement('div');
+                    breakDiv.className = 'page-break';
+                    breakDiv.style.counterReset = 'page ' + pageCount;
+                    
+                    var indicator = document.createElement('div');
+                    indicator.className = 'page-indicator';
+                    indicator.textContent = '--- Fim da Página ' + pageCount + ' | Início da Página ' + (pageCount + 1) + ' ---';
+                    
+                    section.parentNode.insertBefore(breakDiv, section);
+                    section.parentNode.insertBefore(indicator, section);
+                    
+                    currentHeight = section.offsetHeight;
+                    pageCount++;
+                }
+            }
+            
+            if (pageCount > 1) {
+                var lastIndicator = document.createElement('div');
+                lastIndicator.className = 'page-indicator';
+                lastIndicator.style.marginTop = '10px';
+                lastIndicator.style.background = '#e8f4fd';
+                lastIndicator.style.borderColor = '#3498db';
+                lastIndicator.innerHTML = '<strong>Total: ' + pageCount + ' páginas</strong>';
+                page.appendChild(lastIndicator);
+            }
+        }
+
+        // ==================== SALVAR / CARREGAR / EXCLUIR ====================
+        function getBudgetData() {
+            return {
+                id: document.getElementById('editId').value || ('b_' + Date.now()),
+                docNumber: document.getElementById('docNumber').value,
+                docDate: document.getElementById('docDate').value,
+                clientName: document.getElementById('clientName').value,
+                clientPhone: document.getElementById('clientPhone').value,
+                serviceTitle: document.getElementById('serviceTitle').value,
+                serviceDescription: document.getElementById('serviceDescription').value,
+                services: serviceItems.filter(function(s) { return s.name || s.price > 0; }).map(function(s) { return { name: s.name, price: s.price, qty: s.qty }; }),
+                paymentMethod: document.getElementById('paymentMethod').value,
+                pixKey: document.getElementById('pixKey').value,
+                discount: document.getElementById('discount').value,
+                status: document.getElementById('budgetStatus').value,
+                savedAt: new Date().toISOString()
+            };
+        }
+
+        function saveBudget() {
+            var data = getBudgetData();
+            if (!data.clientName) { alert('Preencha o nome do cliente.'); return; }
+
+            var budgets = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+            var existing = budgets.findIndex(function(b) { return b.id === data.id; });
+
+            if (existing >= 0) { budgets[existing] = data; } else { budgets.push(data); }
+
+            localStorage.setItem('orcamentos', JSON.stringify(budgets));
+            document.getElementById('editId').value = data.id;
+
+            alert('Orçamento salvo com sucesso!');
+            loadBudgetList();
+        }
+
+        function loadBudgetList() {
+            var budgets = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+
+            // Stats
+            document.getElementById('statTotal').textContent = budgets.length;
+            document.getElementById('statApproved').textContent = budgets.filter(function(b) { return b.status === 'aprovado'; }).length;
+            document.getElementById('statAnalysis').textContent = budgets.filter(function(b) { return b.status === 'analise'; }).length;
+            document.getElementById('statRefused').textContent = budgets.filter(function(b) { return b.status === 'recusado'; }).length;
+
+            // Filter
+            var filtered = budgets;
+            if (currentFilter !== 'todos') { filtered = budgets.filter(function(b) { return b.status === currentFilter; }); }
+            if (currentSearch) {
+                var search = currentSearch.toLowerCase();
+                filtered = filtered.filter(function(b) {
+                    return (b.clientName && b.clientName.toLowerCase().indexOf(search) >= 0) ||
+                           (b.docNumber && b.docNumber.toLowerCase().indexOf(search) >= 0);
+                });
+            }
+
+            var list = document.getElementById('budgetList');
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><p>Nenhum orçamento encontrado</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            filtered.sort(function(a, b) { return new Date(b.savedAt) - new Date(a.savedAt); }).forEach(function(budget) {
+                var total = 0;
+                if (budget.services) { budget.services.forEach(function(s) { total += (s.price || 0) * (s.qty || 1); }); }
+                var discount = parseFloat(budget.discount) || 0;
+                var finalPrice = Math.max(0, total - discount);
+
+                var statusLabels = { rascunho: 'Rascunho', analise: 'Em Análise', aprovado: 'Aprovado', recusado: 'Recusado' };
+                var dateStr = budget.docDate ? budget.docDate.split('-').reverse().join('/') : '--/--/----';
+
+                var card = document.createElement('div');
+                card.className = 'budget-card';
+                card.innerHTML =
+                    '<div class="budget-card-info">' +
+                        '<div class="budget-card-title">' + (budget.docNumber || '---') + ' — ' + (budget.clientName || 'Sem cliente') + '</div>' +
+                        '<div class="budget-card-meta">' + dateStr + ' | ' + (budget.serviceTitle || 'Serviço') + '</div>' +
+                    '</div>' +
+                    '<div style="text-align:center;">' +
+                        '<select class="status-select" onchange="changeStatus(\'' + budget.id + '\',this.value)">' +
+                            '<option value="rascunho"' + (budget.status === 'rascunho' ? ' selected' : '') + '>Rascunho</option>' +
+                            '<option value="analise"' + (budget.status === 'analise' ? ' selected' : '') + '>Em Análise</option>' +
+                            '<option value="aprovado"' + (budget.status === 'aprovado' ? ' selected' : '') + '>Aprovado</option>' +
+                            '<option value="recusado"' + (budget.status === 'recusado' ? ' selected' : '') + '>Recusado</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="budget-card-value">R$ ' + fmtCur(finalPrice) + '</div>' +
+                    '<div class="budget-card-actions">' +
+                        '<button class="btn-card btn-edit" onclick="editBudget(\'' + budget.id + '\')">Editar</button>' +
+                        '<button class="btn-card btn-view" onclick="viewBudget(\'' + budget.id + '\')">Ver</button>' +
+                        '<button class="btn-card btn-delete" onclick="deleteBudget(\'' + budget.id + '\')">Excluir</button>' +
+                    '</div>';
+                list.appendChild(card);
+            });
+        }
+
+        function editBudget(id) {
+            var budgets = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+            var budget = budgets.find(function(b) { return b.id === id; });
+            if (!budget) return;
+
+            document.getElementById('editId').value = budget.id;
+            document.getElementById('docNumber').value = budget.docNumber || '';
+            document.getElementById('docDate').value = budget.docDate || '';
+            document.getElementById('clientName').value = budget.clientName || '';
+            document.getElementById('clientPhone').value = budget.clientPhone || '';
+            document.getElementById('serviceTitle').value = budget.serviceTitle || '';
+            document.getElementById('serviceDescription').value = budget.serviceDescription || '';
+            document.getElementById('paymentMethod').value = budget.paymentMethod || 'PIX';
+            document.getElementById('pixKey').value = budget.pixKey || '';
+            document.getElementById('discount').value = budget.discount || '';
+            document.getElementById('budgetStatus').value = budget.status || 'rascunho';
+
+            document.getElementById('servicesList').innerHTML = '';
+            serviceItems = [];
+            itemCounter = 0;
+
+            if (budget.services && budget.services.length > 0) {
+                budget.services.forEach(function(s) {
+                    itemCounter++;
+                    var id2 = itemCounter;
+                    serviceItems.push({ id: id2, name: s.name, price: s.price, qty: s.qty });
+                    var div = document.createElement('div');
+                    div.className = 'service-row';
+                    div.id = 'svc-' + id2;
+                    div.draggable = true;
+                    div.setAttribute('data-id', id2);
+                    div.innerHTML =
+                        '<div class="drag-handle" title="Arrastar para reordenar">☰</div>' +
+                        '<input type="text" placeholder="Serviço" value="' + (s.name || '') + '" oninput="updSvc(' + id2 + ',\'name\',this.value)">' +
+                        '<input type="number" placeholder="R$ 0,00" step="0.01" min="0" value="' + (s.price || '') + '" oninput="updSvc(' + id2 + ',\'price\',this.value)">' +
+                        '<input type="number" placeholder="Qtd" value="' + (s.qty || 1) + '" min="1" oninput="updSvc(' + id2 + ',\'qty\',this.value)">' +
+                        '<button class="btn-remove" onclick="rmSvc(' + id2 + ')">×</button>';
+                    
+                    // Drag events
+                    div.addEventListener('dragstart', handleDragStart);
+                    div.addEventListener('dragover', handleDragOver);
+                    div.addEventListener('dragenter', handleDragEnter);
+                    div.addEventListener('dragleave', handleDragLeave);
+                    div.addEventListener('drop', handleDrop);
+                    div.addEventListener('dragend', handleDragEnd);
+                    
+                    document.getElementById('servicesList').appendChild(div);
+                });
+            } else {
+                addService();
+            }
+
+            updatePreview();
+            switchTab('preview');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        }
+
+        function viewBudget(id) { editBudget(id); }
+
+        function deleteBudget(id) {
+            if (!confirm('Tem certeza que deseja excluir este orçamento?')) return;
+            var budgets = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+            budgets = budgets.filter(function(b) { return b.id !== id; });
+            localStorage.setItem('orcamentos', JSON.stringify(budgets));
+            loadBudgetList();
+        }
+
+        function changeStatus(id, newStatus) {
+            var budgets = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+            var budget = budgets.find(function(b) { return b.id === id; });
+            if (budget) {
+                budget.status = newStatus;
+                localStorage.setItem('orcamentos', JSON.stringify(budgets));
+                loadBudgetList();
+            }
+        }
+
+        function filterBudgets(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+            event.target.classList.add('active');
+            loadBudgetList();
+        }
+
+        function searchBudgets(value) {
+            currentSearch = value;
+            loadBudgetList();
+        }
+
+        // ==================== NOVO / LIMPAR ====================
+        function newBudget() {
+            var companyData = JSON.parse(localStorage.getItem('empresa') || 'null') || defaultCompany;
+            document.getElementById('editId').value = '';
+            document.getElementById('docNumber').value = '';
+            document.getElementById('docDate').valueAsDate = new Date();
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('serviceTitle').value = '';
+            document.getElementById('serviceDescription').value = '1. Planejamento e Análise Técnica\n2. Fornecimento de Materiais\n3. Instalação e Montagem\n4. Conexão e Testes\n5. Documentação e Homologação';
+            document.getElementById('paymentMethod').value = 'PIX';
+            document.getElementById('pixKey').value = companyData.pix || '';
+            document.getElementById('discount').value = '';
+            document.getElementById('budgetStatus').value = 'rascunho';
+            document.getElementById('servicesList').innerHTML = '';
+            serviceItems = [];
+            itemCounter = 0;
+            addService();
+            updatePreview();
+        }
+
+        function clearForm() {
+            if (!confirm('Tem certeza que deseja limpar todos os campos?')) return;
+            newBudget();
+        }
+    </script>
+</body>
+</html>
